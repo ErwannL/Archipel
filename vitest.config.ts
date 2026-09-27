@@ -9,7 +9,7 @@ export default defineConfig({
     hookTimeout: 30000,
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.ts', 'ui/src/**/*.ts', 'fake-orqea/**/*.ts'],
+      include: ['src/**/*.ts', 'web/src/**/*.ts', 'fake-orqea/**/*.ts'],
       reporter: ['text', 'json-summary'],
       thresholds: { perFile: true, 100: true },
     },

@@ -13,7 +13,7 @@
     "db:up": "docker compose up -d --wait postgres",
     "demo": "tsx -e \"import('./fake-orqea/demo.ts').then(m=>m.runDemoCli(process.env))\"",
     "check": "npm run guard && npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
-    "guard": "! grep -rnEi \"(istanbul|c8|v8) ignore|pragma: no cover|eslint-disable\" src ui fake-orqea test --include=*.ts"
+    "guard": "! grep -rnEi \"(istanbul|c8|v8) ignore|pragma: no cover|eslint-disable\" src web fake-orqea test --include=*.ts"
   },
   "repository": {
     "type": "git",

@@ -18,5 +18,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src", "ui", "fake-orqea", "test", "*.ts"]
+  "include": ["src", "web", "fake-orqea", "test", "*.ts"]
 }
