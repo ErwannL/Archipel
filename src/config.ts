@@ -11,6 +11,8 @@ const schema = z
     HOST: z.string().default('0.0.0.0'),
     PORT: z.coerce.number().int().min(0).max(65535).default(8080),
     WORKER_HEALTH_PORT: z.coerce.number().int().min(0).max(65535).default(8081),
+    // Public link back to Orqea (header, credits, 404 page): the Orqea of THIS environment.
+    ARCHIPEL_ORQEA_URL: z.string().url().default('https://orqea.dev'),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'silent']).default('info'),
     AI_PROVIDER: z.enum(['fake', 'openai']).default('fake'),
     OPENAI_BASE_URL: z.string().url().default('https://api.openai.com/v1'),

@@ -12,7 +12,18 @@ export interface Overview {
     totals: Record<'pending' | 'processing' | 'indexed' | 'failed', number>;
     cards: { cardId: string; status: string; items: number }[];
   };
+  cards: CardDetail[];
   counts: Record<string, number>;
+}
+export type ItemStatus = 'pending' | 'processing' | 'indexed' | 'failed';
+export interface CardDetail {
+  cardId: string;
+  title: string;
+  status: ItemStatus;
+  items: number;
+  updatedAt: string;
+  errorCode: string | null;
+  pendingSince: string | null;
 }
 export interface GraphNode {
   id: string;
@@ -73,6 +84,8 @@ export interface SearchResult {
 }
 
 export interface Api {
+  /** Public: the Orqea URL of this environment (null when unknown). */
+  orqeaUrl(): Promise<string | null>;
   session(token: string): Promise<boolean>;
   overview(): Promise<Overview>;
   graph(): Promise<Graph>;
@@ -93,6 +106,11 @@ export function createApi(fetchFn: typeof fetch = (...a) => fetch(...a)): Api {
     return (await res.json()) as T;
   }
   return {
+    orqeaUrl: () =>
+      call<{ orqeaUrl?: string }>('GET', '/healthz').then(
+        (b) => b.orqeaUrl ?? null,
+        () => null,
+      ),
     session: (token) =>
       call('POST', '/ui/session', { token }).then(
         () => true,

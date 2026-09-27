@@ -111,6 +111,17 @@ describe('UI data, scoped to the session board only', () => {
 
     const ov = (await get('/ui/api/overview')).json();
     expect(ov).toMatchObject({ boardId: a, exists: true, status: { progress: 1 } });
+    expect(ov.cards).toEqual([
+      {
+        cardId: 'c',
+        title: 'Cache',
+        status: 'indexed',
+        items: 1,
+        updatedAt: expect.any(String),
+        errorCode: null,
+        pendingSince: null,
+      },
+    ]);
     const graph = (await get('/ui/api/graph')).json();
     const names = graph.nodes.map((n: { name: string }) => n.name).sort();
     expect(names).toEqual(['Api', 'Redis']);
@@ -149,12 +160,40 @@ describe('UI data, scoped to the session board only', () => {
     expect((await get('/ui/api/entities/abc')).statusCode).toBe(404);
   });
 
+  it('details each card: title, pending age, failure reason', async () => {
+    const a = newBoardId();
+    await applyOperation(pool, op(a, 'card.created', 1, { cardId: 'k1', title: 'Paiement' }));
+    await applyOperation(
+      pool,
+      op(a, 'comment.created', 2, { commentId: 'm1', cardId: 'k2', text: 'Relancer' }),
+    );
+    const { withIsland } = await import('../src/store/islands.js');
+    await withIsland(pool, a, (tx) =>
+      tx.query(`UPDATE items SET status = 'failed', error_code = 'model_unreachable'
+                WHERE card_id = 'k2'`),
+    );
+    const cookie = await login(a);
+    const ov = (
+      await app.inject({ method: 'GET', url: '/ui/api/overview', headers: { cookie } })
+    ).json();
+    const byId = Object.fromEntries(ov.cards.map((c: { cardId: string }) => [c.cardId, c]));
+    expect(byId.k1).toMatchObject({ title: 'Paiement', status: 'pending', errorCode: null });
+    expect(byId.k1.pendingSince).toEqual(expect.any(String));
+    expect(byId.k2).toMatchObject({
+      title: '',
+      status: 'failed',
+      errorCode: 'model_unreachable',
+      pendingSince: null,
+    });
+  });
+
   it('shows an empty board when the island does not exist yet', async () => {
     const cookie = await login(newBoardId());
     const get = (url: string) => app.inject({ method: 'GET', url, headers: { cookie } });
     expect((await get('/ui/api/overview')).json()).toMatchObject({
       exists: false,
       status: { progress: 1, cards: [] },
+      cards: [],
     });
     expect((await get('/ui/api/graph')).json()).toEqual({ nodes: [], edges: [] });
     expect((await get('/ui/api/entities/1')).statusCode).toBe(404);

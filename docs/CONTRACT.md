@@ -492,6 +492,7 @@ Côté Archipel (voir `.env.example`, complet et commenté) :
 | `ARCHIPEL_PORT` / `POSTGRES_PORT`                                              | non           | 8080 / 5433   | Ports publiés sur 127.0.0.1.                                       |
 | `HOST`, `PORT`                                                                 | non           | 0.0.0.0, 8080 | Écoute HTTP dans le conteneur.                                     |
 | `WORKER_HEALTH_PORT`                                                           | non           | 8081          | Healthcheck du worker.                                             |
+| `ARCHIPEL_ORQEA_URL`                                                           | non           | orqea.dev     | Lien « Retour sur Orqea » / crédits de l'UI, rendu par `/healthz`. |
 | `LOG_LEVEL`                                                                    | non           | info          | `fatal`…`debug`, `silent`.                                         |
 | `AI_PROVIDER`                                                                  | non           | fake          | `fake` (local, sans clé) ou `openai` (compatible OpenAI).          |
 | `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_EMBED_MODEL`, `OPENAI_CHAT_MODEL` | si `openai`   | —             | Point d'accès du modèle.                                           |

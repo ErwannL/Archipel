@@ -153,7 +153,10 @@ describe('service authentication', () => {
   });
 
   it('serves health', async () => {
-    expect((await app.inject({ method: 'GET', url: '/healthz' })).json()).toEqual({ ok: true });
+    expect((await app.inject({ method: 'GET', url: '/healthz' })).json()).toEqual({
+      ok: true,
+      orqeaUrl: 'https://orqea.dev',
+    });
   });
 });
 

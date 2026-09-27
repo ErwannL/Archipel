@@ -5,6 +5,7 @@ import { boot } from '../../web/src/main.js';
 import { citation, renderApp, renderEntity, renderResults } from '../../web/src/views.js';
 import { detail, fakeApi, overview, result } from './fixtures.js';
 
+const ORQEA = 'http://localhost:3001/apps/return';
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {
@@ -48,9 +49,15 @@ describe('app', () => {
   it('searches, opens entities from results, relations and graph', async () => {
     const api = fakeApi();
     let select: (id: string) => void = () => undefined;
-    await renderApp(document.getElementById('app')!, api, overview, (_c, _g, onSelect) => {
-      select = onSelect;
-    });
+    await renderApp(
+      document.getElementById('app')!,
+      api,
+      overview,
+      (_c, _g, onSelect) => {
+        select = onSelect;
+      },
+      ORQEA,
+    );
     const input = document.querySelector('input')!;
     const form = document.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -82,8 +89,8 @@ describe('app', () => {
       graph: () => Promise.resolve({ nodes: [], edges: [] }),
       search: () => Promise.resolve({ ...result, passages: [] }),
     });
-    const empty = { ...overview, status: { ...overview.status, cards: [] } };
-    await renderApp(document.getElementById('app')!, api, empty, vi.fn());
+    const empty = { ...overview, cards: [] };
+    await renderApp(document.getElementById('app')!, api, empty, vi.fn(), ORQEA);
     expect(document.body.textContent).toContain('Le graphe de ce board est vide.');
     expect(document.body.textContent).toContain('Aucune carte en mémoire.');
     document.querySelector('input')!.value = 'x';

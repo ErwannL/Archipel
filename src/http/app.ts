@@ -91,7 +91,8 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
 
   app.get('/healthz', async () => {
     await ctx.pool.query('SELECT 1');
-    return { ok: true };
+    // `orqeaUrl` is public (it is a link): it tells the UI which Orqea to go back to.
+    return { ok: true, orqeaUrl: ctx.config.ARCHIPEL_ORQEA_URL };
   });
   await app.register(serviceRoutes(ctx), { prefix: '/v1' });
   await app.register(uiRoutes(ctx));

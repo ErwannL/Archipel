@@ -1,12 +1,8 @@
 import type { Api } from './api.js';
-import { clear, el } from './dom.js';
+import { DEFAULT_ORQEA_URL, loader, notFoundPage } from './brand.js';
+import { clear } from './dom.js';
 import type { GraphRenderer } from './graph.js';
 import { renderApp } from './views.js';
-
-function notFound(root: HTMLElement): 'notfound' {
-  clear(root, el(root.ownerDocument, 'div', { class: 'notfound' }, '404 — introuvable'));
-  return 'notfound';
-}
 
 /**
  * Reads `#handoff=<jwt>` from the URL fragment (never sent to any server by the
@@ -19,13 +15,17 @@ export async function boot(
   draw: GraphRenderer,
 ): Promise<'app' | 'notfound'> {
   const root = win.document.getElementById('app')!;
+  clear(root, loader(win.document));
   const token = new URLSearchParams(win.location.hash.slice(1)).get('handoff');
-  if (token !== null) {
-    win.history.replaceState(null, '', win.location.pathname);
-    if (!(await api.session(token))) return notFound(root);
-  }
+  if (token !== null) win.history.replaceState(null, '', win.location.pathname);
+  const orqeaUrl = (await api.orqeaUrl()) ?? DEFAULT_ORQEA_URL;
+  const notFound = () => {
+    clear(root, notFoundPage(win.document, orqeaUrl));
+    return 'notfound' as const;
+  };
+  if (token !== null && !(await api.session(token))) return notFound();
   const overview = await api.overview().catch(() => null);
-  if (overview === null) return notFound(root);
-  await renderApp(root, api, overview, draw);
+  if (overview === null) return notFound();
+  await renderApp(root, api, overview, draw, orqeaUrl);
   return 'app';
 }

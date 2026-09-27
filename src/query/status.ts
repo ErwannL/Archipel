@@ -57,3 +57,52 @@ export async function retryable(pool: pg.Pool, boardId: string): Promise<string[
     return r.rows.map((row) => row.key).sort();
   });
 }
+
+export interface CardDetail {
+  cardId: string;
+  /** Title of the card item, as Orqea sent it ('' when only comments/checklists arrived). */
+  title: string;
+  status: ItemStatus;
+  items: number;
+  /** Last change of any item of the card (ISO 8601). */
+  updatedAt: string;
+  /** Error code of a failed item (a code, never a message), or null. */
+  errorCode: string | null;
+  /** Oldest pending item of the card (ISO 8601), or null: a long wait means no worker runs. */
+  pendingSince: string | null;
+}
+
+/**
+ * Per-card detail for the human UI (the service status above keeps its contract).
+ * Only data already in the island: an encrypted board never sends anything here.
+ */
+export async function cardDetails(pool: pg.Pool, boardId: string): Promise<CardDetail[]> {
+  if (!(await islandExists(pool, boardId))) return [];
+  return withIsland(pool, boardId, async (tx) => {
+    const r = await tx.query<{
+      card_id: string;
+      statuses: ItemStatus[];
+      title: string | null;
+      updated_at: Date;
+      error_code: string | null;
+      pending_since: Date | null;
+    }>(
+      `SELECT card_id, array_agg(status) AS statuses,
+              (array_agg(title) FILTER (WHERE kind = 'card'))[1] AS title,
+              max(updated_at) AS updated_at,
+              (array_agg(error_code) FILTER (WHERE status = 'failed'))[1] AS error_code,
+              min(updated_at) FILTER (WHERE status = 'pending') AS pending_since
+       FROM items WHERE card_id IS NOT NULL
+       GROUP BY card_id ORDER BY max(updated_at) DESC, card_id`,
+    );
+    return r.rows.map((row) => ({
+      cardId: row.card_id,
+      title: row.title ?? '',
+      status: aggregate(row.statuses),
+      items: row.statuses.length,
+      updatedAt: row.updated_at.toISOString(),
+      errorCode: row.error_code,
+      pendingSince: row.pending_since?.toISOString() ?? null,
+    }));
+  });
+}
