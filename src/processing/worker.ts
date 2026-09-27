@@ -33,9 +33,9 @@ export class Worker {
     try {
       result = await processItem(this.pool, this.provider, job.boardId, job.itemKey);
     } catch (err) {
-      // Island dropped (board deleted) while the job was running: nothing left to do.
-      if (!(err instanceof IslandNotFound)) throw err;
-      result = 'skipped';
+      // Island dropped (board deleted) while the job ran: nothing left to do.
+      // Any other error (e.g. database) is retried like a model failure.
+      result = err instanceof IslandNotFound ? 'skipped' : 'failed';
     }
     if (result === 'failed') {
       result = await failJob(this.pool, job, this.opts.maxAttempts, this.opts.backoffBaseMs);
@@ -70,7 +70,7 @@ export class Worker {
           'worker tick failed',
         );
       }
-      if (!busy && this.running) {
+      if (!busy) {
         await new Promise<void>((resolve) => {
           this.wake = resolve;
           setTimeout(resolve, this.opts.pollMs);

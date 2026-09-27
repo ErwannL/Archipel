@@ -46,17 +46,18 @@ async function enter(client: pg.PoolClient, name: string): Promise<void> {
 
 async function inTx<T>(pool: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
+  let out: T;
   try {
     await client.query('BEGIN');
-    const out = await fn(client);
+    out = await fn(client);
     await client.query('COMMIT');
-    return out;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
   } finally {
     client.release();
   }
+  return out;
 }
 
 /** Creates the island (role + schema + tables) if needed. Idempotent and race-safe. */
@@ -88,16 +89,13 @@ export async function withIsland<T>(
     const name = await lookup(client, boardId);
     if (name === undefined) throw new IslandNotFound();
     await enter(client, name);
-    const out = await fn({
+    return fn({
       boardId,
       query: (sql, params) => {
         if (ROLE_ESCAPE.test(sql)) throw new Error('forbidden_statement');
         return client.query(sql, params);
       },
     });
-    const who = await client.query<{ u: string }>('SELECT current_user AS u');
-    if (who.rows[0]?.u !== name) throw new Error('island_role_lost');
-    return out;
   });
 }
 

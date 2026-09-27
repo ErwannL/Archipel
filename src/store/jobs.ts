@@ -69,11 +69,3 @@ export async function failJob(
   );
   return 'retry';
 }
-
-export async function pendingJobCount(pool: pg.Pool, boardId: string): Promise<number> {
-  const r = await pool.query<{ n: number }>(
-    'SELECT count(*)::int AS n FROM archipel.jobs WHERE board_id = $1',
-    [boardId],
-  );
-  return r.rows[0]!.n;
-}

@@ -1,13 +1,11 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import pino from 'pino';
 import { FakeProvider } from '../src/ai/fake.js';
-import { ModelError, type ModelProvider } from '../src/ai/provider.js';
+import type { ModelProvider } from '../src/ai/provider.js';
 import { applyOperation } from '../src/ingest/apply.js';
-import { processItem } from '../src/processing/pipeline.js';
 import { Worker } from '../src/processing/worker.js';
 import { query } from '../src/query/query.js';
 import { boardStatus } from '../src/query/status.js';
-import { islandCounts, withIsland } from '../src/store/islands.js';
 import { newBoardId, testPool } from './helpers/db.js';
 import { op } from './helpers/events.js';
 

@@ -36,7 +36,6 @@ function toHttp(err: unknown): { status: number; body: object; log: boolean } {
     return { status: 413, body: { error: 'payload_too_large' }, log: false };
   if (e.statusCode === 415)
     return { status: 415, body: { error: 'unsupported_media_type' }, log: false };
-  if (e.statusCode === 400) return { status: 400, body: { error: 'invalid_json' }, log: false };
   return { status: 500, body: { error: 'internal_error' }, log: true };
 }
 
@@ -57,8 +56,9 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
       done(new HttpError(400, 'invalid_json'), undefined);
     }
   });
-  app.addHook('onRequest', async (req) => {
+  app.addHook('onRequest', (req, _reply, done) => {
     req.rawBody = '';
+    done();
   });
   app.addHook('onSend', async (_req, reply) => {
     reply.headers(SECURITY_HEADERS);

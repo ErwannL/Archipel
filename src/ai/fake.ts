@@ -49,12 +49,15 @@ export function fakeEmbedding(text: string): number[] {
 
 const IDENT = '`?([\\p{L}][\\p{L}\\p{N}_.-]*[\\p{L}\\p{N}])`?';
 const RELATION_PATTERNS: [RegExp, string][] = [
-  [new RegExp(`${IDENT}\\s+(?:dépend(?:ent)? de|depends on)\\s+${IDENT}`, 'giu'), 'depends_on'],
-  [new RegExp(`${IDENT}\\s+(?:remplace|replaces)\\s+${IDENT}`, 'giu'), 'replaces'],
-  [new RegExp(`${IDENT}\\s+(?:utilise|appelle|uses|calls)\\s+${IDENT}`, 'giu'), 'uses'],
+  [
+    new RegExp(`${IDENT}[ \\t]+(?:dépend(?:ent)? de|depends on)[ \\t]+${IDENT}`, 'giu'),
+    'depends_on',
+  ],
+  [new RegExp(`${IDENT}[ \\t]+(?:remplace|replaces)[ \\t]+${IDENT}`, 'giu'), 'replaces'],
+  [new RegExp(`${IDENT}[ \\t]+(?:utilise|appelle|uses|calls)[ \\t]+${IDENT}`, 'giu'), 'uses'],
 ];
 const COMPONENT_WORD = new RegExp(
-  `\\b(?:module|composant|service|component|api|table|librairie|library)\\s+${IDENT}`,
+  `\\b(?:module|composant|service|component|api|table|librairie|library)[ \\t]+${IDENT}`,
   'giu',
 );
 const LABELLED_LINE =

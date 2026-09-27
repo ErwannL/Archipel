@@ -82,7 +82,7 @@ describe('island isolation (enforced by Postgres roles and schemas)', () => {
   });
 
   it('throws IslandNotFound for an unknown board and rolls back on error', async () => {
-    await expect(withIsland(pool, newBoardId(), async () => 1)).rejects.toBeInstanceOf(
+    await expect(withIsland(pool, newBoardId(), () => Promise.resolve(1))).rejects.toBeInstanceOf(
       IslandNotFound,
     );
     const a = newBoardId();

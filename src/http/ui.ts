@@ -38,7 +38,7 @@ export function uiRoutes(ctx: AppContext) {
   const setCookie = (reply: FastifyReply, value: string, maxAge: number) =>
     reply.header('set-cookie', `${SESSION_COOKIE}=${value}; ${cookieFlags}; Max-Age=${maxAge}`);
 
-  return async function plugin(app: FastifyInstance): Promise<void> {
+  return function plugin(app: FastifyInstance): Promise<void> {
     app.post('/ui/session', async (req, reply) => {
       const body = z.object({ token: z.string().max(4096) }).safeParse(req.body);
       const claims = body.success
@@ -102,5 +102,6 @@ export function uiRoutes(ctx: AppContext) {
       }
       return query(ctx.pool, ctx.provider, boardId, { question, maxChars: 20000, topK: 10 });
     });
+    return Promise.resolve();
   };
 }

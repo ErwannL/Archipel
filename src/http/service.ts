@@ -64,7 +64,7 @@ export function serviceRoutes(ctx: AppContext) {
     if (!limiter.hit(params.boardId ?? '*')) throw new HttpError(429, 'rate_limited');
   }
 
-  return async function plugin(app: FastifyInstance): Promise<void> {
+  return function plugin(app: FastifyInstance): Promise<void> {
     app.addHook('preHandler', authenticate);
 
     app.post('/events', async (req, reply) => {
@@ -183,5 +183,6 @@ export function serviceRoutes(ctx: AppContext) {
       const v = versionQuery.parse(req.body ?? {}).version ?? now();
       return { userId, ...(await eraseUser(ctx.pool, userId, v)) };
     });
+    return Promise.resolve();
   };
 }

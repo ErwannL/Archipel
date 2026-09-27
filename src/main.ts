@@ -14,12 +14,13 @@ export type Role = 'api' | 'worker' | 'all';
 export interface Running {
   /** Base URL of the API (role api/all) or of the worker health endpoint. */
   urls: string[];
+  pool: pg.Pool;
   close(): Promise<void>;
 }
 
 /** Built UI location: `<repo>/dist/ui`, resolved from this file in both src/ and dist/src/. */
-export function defaultUiDir(): string | null {
-  const candidates = ['../ui', '../dist/ui'].map((p) => fileURLToPath(new URL(p, import.meta.url)));
+export function defaultUiDir(base: string = import.meta.url): string | null {
+  const candidates = ['../ui', '../dist/ui'].map((p) => fileURLToPath(new URL(p, base)));
   return candidates.find((d) => existsSync(`${d}/index.html`)) ?? null;
 }
 
@@ -82,5 +83,5 @@ export async function main(
   process.on('SIGTERM', onSignal);
   process.on('SIGINT', onSignal);
   log.info({ role, provider: provider.id }, 'started');
-  return { urls, close };
+  return { urls, pool, close };
 }
