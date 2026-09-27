@@ -4,10 +4,17 @@ import { safeEqual } from './hmac.js';
 
 export const SESSION_COOKIE = 'archipel_session';
 
-const sessionSchema = z.object({ b: z.string(), u: z.string(), exp: z.number() });
+const sessionSchema = z.object({
+  b: z.string(),
+  u: z.string(),
+  exp: z.number(),
+  n: z.string().optional(),
+});
 export interface Session {
   boardId: string;
   userId: string;
+  /** Board display name from the handoff, kept in the signed cookie only. */
+  boardName?: string;
   exp: number;
 }
 
@@ -16,9 +23,9 @@ function mac(secret: string, data: string): string {
 }
 
 export function encodeSession(secret: string, s: Session): string {
-  const data = Buffer.from(JSON.stringify({ b: s.boardId, u: s.userId, exp: s.exp })).toString(
-    'base64url',
-  );
+  const data = Buffer.from(
+    JSON.stringify({ b: s.boardId, u: s.userId, exp: s.exp, n: s.boardName }),
+  ).toString('base64url');
   return `${data}.${mac(secret, data)}`;
 }
 
@@ -31,7 +38,8 @@ export function decodeSession(
   if (!data || !sig || extra !== undefined || !safeEqual(mac(secret, data), sig)) return null;
   const parsed = sessionSchema.safeParse(JSON.parse(Buffer.from(data, 'base64url').toString()));
   if (!parsed.success || parsed.data.exp <= nowSeconds) return null;
-  return { boardId: parsed.data.b, userId: parsed.data.u, exp: parsed.data.exp };
+  const { b, u, exp, n } = parsed.data;
+  return { boardId: b, userId: u, exp, ...(n === undefined ? {} : { boardName: n }) };
 }
 
 export function readCookie(header: string | undefined, name: string): string | undefined {

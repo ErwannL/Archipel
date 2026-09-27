@@ -1,4 +1,5 @@
-import type { Api, EntityDetail, Overview, SearchResult, Source } from './api.js';
+import type { Api, CardDetail, EntityDetail, Overview, SearchResult, Source } from './api.js';
+import { backToOrqea, brand } from './brand.js';
 import { clear, el } from './dom.js';
 import type { GraphRenderer } from './graph.js';
 
@@ -36,30 +37,79 @@ function gauge(doc: Document, o: Overview): HTMLElement {
   );
 }
 
-function statusTable(doc: Document, o: Overview): HTMLElement {
-  if (o.status.cards.length === 0)
-    return el(doc, 'p', { class: 'empty' }, 'Aucune carte en mémoire.');
+export const STATUS_LABELS: Record<CardDetail['status'], string> = {
+  pending: 'En attente',
+  processing: 'En cours d’analyse',
+  indexed: 'En mémoire',
+  failed: 'En échec',
+};
+
+const ERROR_LABELS: Record<string, string> = {
+  model_unreachable: 'modèle injoignable',
+  model_bad_response: 'réponse du modèle illisible',
+  internal_error: 'erreur interne',
+};
+
+/** Human reason of a failure; unknown codes (e.g. `model_http_503`) are shown as is. */
+export function errorLabel(code: string): string {
+  return ERROR_LABELS[code] ?? code;
+}
+
+/** A pending item older than this means no worker is draining the queue. */
+export const STALE_PENDING_MS = 5 * 60_000;
+
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function cardRow(doc: Document, c: CardDetail, now: number): HTMLElement {
+  const name = el(doc, 'td', {});
+  if (c.title) name.append(el(doc, 'span', { class: 'title' }, c.title), ' ');
+  name.append(el(doc, 'span', { class: 'cite' }, `#${c.cardId}`));
+  const state = el(doc, 'td', { class: `status-${c.status}` }, STATUS_LABELS[c.status]);
+  if (c.errorCode !== null)
+    state.append(el(doc, 'div', { class: 'reason' }, errorLabel(c.errorCode)));
+  if (c.pendingSince !== null && now - Date.parse(c.pendingSince) > STALE_PENDING_MS)
+    state.append(
+      el(doc, 'div', { class: 'reason' }, `depuis ${formatDate(c.pendingSince)} — worker arrêté ?`),
+    );
   return el(
     doc,
-    'table',
+    'tr',
+    {},
+    name,
+    state,
+    el(doc, 'td', { class: 'num' }, String(c.items)),
+    el(doc, 'td', {}, el(doc, 'time', { datetime: c.updatedAt }, formatDate(c.updatedAt))),
+  );
+}
+
+export function statusTable(doc: Document, cards: CardDetail[], now = Date.now()): HTMLElement {
+  if (cards.length === 0) return el(doc, 'p', { class: 'empty' }, 'Aucune carte en mémoire.');
+  return el(
+    doc,
+    'div',
     {},
     el(
       doc,
-      'tr',
-      {},
-      el(doc, 'th', {}, 'Carte'),
-      el(doc, 'th', {}, 'État'),
-      el(doc, 'th', {}, 'Éléments'),
+      'p',
+      { class: 'empty help' },
+      '« En attente » : reçue d’Orqea, pas encore analysée par le worker. « Éléments » : la carte, ses commentaires et checklists, analysés séparément. Un board chiffré n’envoie rien.',
     ),
-    ...o.status.cards.map((c) =>
+    el(
+      doc,
+      'table',
+      {},
       el(
         doc,
         'tr',
         {},
-        el(doc, 'td', {}, c.cardId),
-        el(doc, 'td', { class: `status-${c.status}` }, c.status),
-        el(doc, 'td', {}, String(c.items)),
+        el(doc, 'th', {}, 'Carte'),
+        el(doc, 'th', {}, 'État'),
+        el(doc, 'th', { title: 'Carte, commentaires et checklists' }, 'Éléments'),
+        el(doc, 'th', {}, 'Mise à jour'),
       ),
+      ...cards.map((c) => cardRow(doc, c, now)),
     ),
   );
 }
@@ -137,6 +187,7 @@ export async function renderApp(
   api: Api,
   overview: Overview,
   draw: GraphRenderer,
+  orqeaUrl: string,
 ): Promise<void> {
   const doc = root.ownerDocument;
   const detail = el(
@@ -179,9 +230,10 @@ export async function renderApp(
       doc,
       'header',
       {},
-      el(doc, 'h1', {}, 'Archipel'),
-      el(doc, 'span', { class: 'board' }, `board ${overview.boardId}`),
+      brand(doc, orqeaUrl),
+      el(doc, 'span', { class: 'board' }, overview.boardName ?? `Board #${overview.boardId}`),
       gauge(doc, overview),
+      backToOrqea(doc, orqeaUrl),
     ),
     el(
       doc,
@@ -195,7 +247,7 @@ export async function renderApp(
         form,
         results,
         el(doc, 'h2', {}, 'État des cartes'),
-        statusTable(doc, overview),
+        statusTable(doc, overview.cards),
       ),
       graphBox,
       el(doc, 'section', {}, el(doc, 'h2', {}, 'Entité'), detail),

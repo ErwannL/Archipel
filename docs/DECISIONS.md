@@ -124,7 +124,7 @@ liens sont recalculés quand une consigne change ou disparaît.
 - Jeton de passation dans le fragment d'URL, 60 s, usage unique, échangé contre un cookie
   `HttpOnly; SameSite=Strict` limité à un board ; toute l'UI renvoie 404 sans session.
 - CSP stricte (`script-src 'self'`, pas de `unsafe-inline` ; seul le `<style>` fixe injecté par
-  Cytoscape est autorisé par son empreinte), `frame-ancestors 'none'`, `no-referrer`, `nosniff`.
+  Cytoscape est autorisé par son empreinte), `frame-ancestors` limité aux origines d'Orqea (`ARCHIPEL_FRAME_ANCESTORS`, l'UI s'affiche dans une modale d'Orqea), `no-referrer`, `nosniff`.
 - Journaux : motif de route, statut, durée, ids, codes d'erreur. **Jamais** de corps, de chaîne de
   requête, de message d'erreur Postgres (qui peut citer des valeurs) ni de texte du modèle.
 - Conteneurs : utilisateur non-root, système de fichiers en lecture seule, `no-new-privileges`,

@@ -13,6 +13,7 @@ export const KIND_COLORS: Record<string, string> = {
   decision: '#12805c',
   bug: '#c01048',
   concept: '#b54708',
+  card: '#0e9384',
 };
 
 export const cytoscapeRenderer: GraphRenderer = (container, graph, onSelect) => {

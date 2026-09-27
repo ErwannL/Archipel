@@ -133,6 +133,15 @@ describe('config', () => {
       loadConfig({ ...TEST_ENV, ARCHIPEL_HANDOFF_SECRET: TEST_ENV.ARCHIPEL_HMAC_SECRET! }),
     ).toThrow(/must differ/);
     expect(() => loadConfig({ ...TEST_ENV, AI_PROVIDER: 'openai' })).toThrow(/OPENAI_API_KEY/);
+    // frame-ancestors is written into the CSP: nothing but origins may get in.
+    for (const bad of ["http://a; script-src 'unsafe-inline'", '*', "'self'", 'javascript:x'])
+      expect(() => loadConfig({ ...TEST_ENV, ARCHIPEL_FRAME_ANCESTORS: bad })).toThrow(
+        /ARCHIPEL_FRAME_ANCESTORS/,
+      );
+    expect(
+      loadConfig({ ...TEST_ENV, ARCHIPEL_FRAME_ANCESTORS: 'https://x.dev:8443' })
+        .ARCHIPEL_FRAME_ANCESTORS,
+    ).toBe('https://x.dev:8443');
     expect(
       loadConfig({ ...TEST_ENV, AI_PROVIDER: 'openai', OPENAI_API_KEY: 'k' }).AI_PROVIDER,
     ).toBe('openai');

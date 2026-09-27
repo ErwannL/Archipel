@@ -66,6 +66,11 @@ describe('fake provider', () => {
   });
 
   it('detects stance toward guidelines', () => {
+    expect(fakeExtract('Texte\n\nListe : À faire · Étiquettes : ux, , back').entities).toEqual([
+      { kind: 'concept', name: 'À faire' },
+      { kind: 'concept', name: 'ux' },
+      { kind: 'concept', name: 'back' },
+    ]);
     expect(fakeExtract('Contrairement à la consigne, on a supprimé la table.').stance).toBe(
       'contradicts',
     );

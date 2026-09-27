@@ -5,6 +5,7 @@ import { boot } from '../../web/src/main.js';
 import { citation, renderApp, renderEntity, renderResults } from '../../web/src/views.js';
 import { detail, fakeApi, overview, result } from './fixtures.js';
 
+const ORQEA = 'http://localhost:3001/apps/return';
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {
@@ -20,7 +21,7 @@ describe('boot (handoff in the URL fragment)', () => {
     expect(await boot(window, api, draw)).toBe('app');
     expect(api.session).toHaveBeenCalledWith('tok.en.sig');
     expect(window.location.hash).toBe('');
-    expect(document.querySelector('header')!.textContent).toContain('board b-7');
+    expect(document.querySelector('header')!.textContent).toContain('Refonte paiements');
     expect(document.querySelector('.gauge')!.textContent).toContain('50 %');
     expect((document.querySelector('.fill') as HTMLElement).style.width).toBe('50%');
     expect(draw).toHaveBeenCalledOnce();
@@ -48,9 +49,15 @@ describe('app', () => {
   it('searches, opens entities from results, relations and graph', async () => {
     const api = fakeApi();
     let select: (id: string) => void = () => undefined;
-    await renderApp(document.getElementById('app')!, api, overview, (_c, _g, onSelect) => {
-      select = onSelect;
-    });
+    await renderApp(
+      document.getElementById('app')!,
+      api,
+      overview,
+      (_c, _g, onSelect) => {
+        select = onSelect;
+      },
+      ORQEA,
+    );
     const input = document.querySelector('input')!;
     const form = document.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -82,10 +89,11 @@ describe('app', () => {
       graph: () => Promise.resolve({ nodes: [], edges: [] }),
       search: () => Promise.resolve({ ...result, passages: [] }),
     });
-    const empty = { ...overview, status: { ...overview.status, cards: [] } };
-    await renderApp(document.getElementById('app')!, api, empty, vi.fn());
+    const empty = { ...overview, cards: [], boardName: null };
+    await renderApp(document.getElementById('app')!, api, empty, vi.fn(), ORQEA);
     expect(document.body.textContent).toContain('Le graphe de ce board est vide.');
     expect(document.body.textContent).toContain('Aucune carte en mémoire.');
+    expect(document.querySelector('header .board')!.textContent).toBe('Board #b-7');
     document.querySelector('input')!.value = 'x';
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();

@@ -55,7 +55,19 @@ export function signed(
   });
 }
 
-export function handoff(boardId: string, userId = 'u1', lifetime = 60, iatOffset = 0): string {
+export function handoff(
+  boardId: string,
+  userId = 'u1',
+  lifetime = 60,
+  iatOffset = 0,
+  extra: object = {},
+): string {
   const iat = Math.floor(Date.now() / 1000) + iatOffset;
-  return signHs256(config.ARCHIPEL_HANDOFF_SECRET, { userId, boardId, iat, exp: iat + lifetime });
+  return signHs256(config.ARCHIPEL_HANDOFF_SECRET, {
+    userId,
+    boardId,
+    iat,
+    exp: iat + lifetime,
+    ...extra,
+  });
 }

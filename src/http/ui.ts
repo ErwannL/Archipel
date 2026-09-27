@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { boardGraph, entityDetail } from '../query/explore.js';
 import { query } from '../query/query.js';
-import { boardStatus } from '../query/status.js';
+import { boardStatus, cardDetails } from '../query/status.js';
 import { claimHandoff } from '../store/control.js';
 import { islandCounts, islandExists } from '../store/islands.js';
 import { verifyHandoff } from '../security/jwt.js';
@@ -51,6 +51,7 @@ export function uiRoutes(ctx: AppContext) {
       const value = encodeSession(ctx.config.ARCHIPEL_SESSION_SECRET, {
         boardId: claims.boardId,
         userId: claims.userId,
+        boardName: claims.boardName,
         exp,
       });
       setCookie(reply, value, ctx.config.SESSION_TTL_SECONDS);
@@ -63,13 +64,14 @@ export function uiRoutes(ctx: AppContext) {
     });
 
     app.get('/ui/api/overview', async (req) => {
-      const { boardId } = session(req);
-      const [status, counts, exists] = await Promise.all([
+      const { boardId, boardName } = session(req);
+      const [status, cards, counts, exists] = await Promise.all([
         boardStatus(ctx.pool, boardId),
+        cardDetails(ctx.pool, boardId),
         islandCounts(ctx.pool, boardId),
         islandExists(ctx.pool, boardId),
       ]);
-      return { boardId, exists, status, counts };
+      return { boardId, boardName: boardName ?? null, exists, status, cards, counts };
     });
 
     app.get('/ui/api/graph', async (req) => {

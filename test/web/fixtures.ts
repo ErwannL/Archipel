@@ -3,12 +3,24 @@ import type { Api, EntityDetail, Overview, SearchResult } from '../../web/src/ap
 
 export const overview: Overview = {
   boardId: 'b-7',
+  boardName: 'Refonte paiements',
   exists: true,
   status: {
     progress: 0.5,
     totals: { pending: 1, processing: 0, indexed: 1, failed: 0 },
     cards: [{ cardId: 'c1', status: 'pending', items: 2 }],
   },
+  cards: [
+    {
+      cardId: 'c1',
+      title: 'Paiements',
+      status: 'pending',
+      items: 2,
+      updatedAt: '2026-09-27T10:00:00.000Z',
+      errorCode: null,
+      pendingSince: '2026-09-27T10:00:00.000Z',
+    },
+  ],
   counts: { items: 2 },
 };
 
@@ -75,6 +87,7 @@ export const result: SearchResult = {
 
 export function fakeApi(over: Partial<Api> = {}): Api {
   return {
+    orqeaUrl: vi.fn(() => Promise.resolve('http://localhost:3001/apps/return')),
     session: vi.fn(() => Promise.resolve(true)),
     overview: vi.fn(() => Promise.resolve(overview)),
     graph: vi.fn(() =>

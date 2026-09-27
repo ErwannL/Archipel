@@ -423,8 +423,15 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1LTQyIiwiYm9hcmRJZCI6ImItNyI
 En Node : `jsonwebtoken.sign({ userId, boardId }, secret, { algorithm: 'HS256', expiresIn: 60 })`
 produit un jeton conforme (il ajoute `iat` et `exp`).
 
-L'UI s'ouvre dans un nouvel onglet (elle refuse d'être affichée dans un iframe :
-`frame-ancestors 'none'`).
+Claim facultatif `boardName` (≤ 200 caractères) : nom affiché du board, gardé dans le cookie de
+session signé seulement (jamais en base). Orqea l'OMET pour un board chiffré ; sans lui l'UI
+affiche « Board #<id> ».
+
+L'UI peut être affichée dans un iframe des seules origines de `ARCHIPEL_FRAME_ANCESTORS`
+(CSP `frame-ancestors`, pas de `X-Frame-Options`). Le cookie de session est `SameSite=Strict` :
+il n'est envoyé dans l'iframe que si Orqea et Archipel sont du MÊME site (même schéma et même
+domaine, le port ne compte pas) — `http://localhost:3001` et `http://localhost:8097` le sont,
+`localhost` et `127.0.0.1` ne le sont PAS.
 
 Routes internes de l'UI (appelées par l'UI elle-même, pas par Orqea) : `POST /ui/session`,
 `DELETE /ui/session`, `GET /ui/api/overview`, `GET /ui/api/graph`, `GET /ui/api/entities/:id`,
@@ -492,6 +499,8 @@ Côté Archipel (voir `.env.example`, complet et commenté) :
 | `ARCHIPEL_PORT` / `POSTGRES_PORT`                                              | non           | 8080 / 5433   | Ports publiés sur 127.0.0.1.                                       |
 | `HOST`, `PORT`                                                                 | non           | 0.0.0.0, 8080 | Écoute HTTP dans le conteneur.                                     |
 | `WORKER_HEALTH_PORT`                                                           | non           | 8081          | Healthcheck du worker.                                             |
+| `ARCHIPEL_ORQEA_URL`                                                           | non           | orqea.dev     | Lien « Retour sur Orqea » / crédits de l'UI, rendu par `/healthz`. |
+| `ARCHIPEL_FRAME_ANCESTORS`                                                     | non           | voir `.env`   | Origines autorisées à encadrer l'UI (iframe), séparées par espace. |
 | `LOG_LEVEL`                                                                    | non           | info          | `fatal`…`debug`, `silent`.                                         |
 | `AI_PROVIDER`                                                                  | non           | fake          | `fake` (local, sans clé) ou `openai` (compatible OpenAI).          |
 | `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_EMBED_MODEL`, `OPENAI_CHAT_MODEL` | si `openai`   | —             | Point d'accès du modèle.                                           |
