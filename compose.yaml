@@ -1,0 +1,69 @@
+name: archipel
+
+x-app: &app
+  build: .
+  image: archipel:local
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://archipel_app:${ARCHIPEL_DB_PASSWORD}@postgres:5432/archipel
+  depends_on:
+    postgres:
+      condition: service_healthy
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: ['no-new-privileges:true']
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ARCHIPEL_DB_PASSWORD: ${ARCHIPEL_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sh:/docker-entrypoint-initdb.d/10-archipel.sh:ro
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5433}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d archipel']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    <<: *app
+    command: ['node', '-e', "import('./dist/src/main.js').then((m) => m.main(process.env, 'api'))"]
+    ports:
+      - '127.0.0.1:${ARCHIPEL_PORT:-8080}:8080'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:8080/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    <<: *app
+    command:
+      ['node', '-e', "import('./dist/src/main.js').then((m) => m.main(process.env, 'worker'))"]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:8081/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
