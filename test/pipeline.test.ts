@@ -18,6 +18,7 @@ const worker = (provider: ModelProvider = fake) =>
 
 describe('ingest → process → query', () => {
   it('builds a graph with guideline links and answers with citations', async () => {
+    await pool.query('DELETE FROM archipel.jobs');
     const b = newBoardId();
     await applyOperation(
       pool,
