@@ -231,7 +231,7 @@ export async function renderApp(
       'header',
       {},
       brand(doc, orqeaUrl),
-      el(doc, 'span', { class: 'board' }, `board ${overview.boardId}`),
+      el(doc, 'span', { class: 'board' }, overview.boardName ?? `Board #${overview.boardId}`),
       gauge(doc, overview),
       backToOrqea(doc, orqeaUrl),
     ),

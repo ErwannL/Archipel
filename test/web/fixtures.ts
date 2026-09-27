@@ -3,6 +3,7 @@ import type { Api, EntityDetail, Overview, SearchResult } from '../../web/src/ap
 
 export const overview: Overview = {
   boardId: 'b-7',
+  boardName: 'Refonte paiements',
   exists: true,
   status: {
     progress: 0.5,

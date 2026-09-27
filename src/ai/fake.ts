@@ -107,6 +107,12 @@ export function fakeExtract(text: string): Extraction {
       relations.push({ src: add('component', m[1]!), dst: add('component', m[2]!), type });
     }
   }
+  // Card metadata written by the ingester (`Liste : …` / `Étiquettes : a, b`): lists and
+  // labels become concepts, so cards of one list or label meet in the graph.
+  for (const m of text.matchAll(/(Liste|Étiquettes) : ([^·\n]+)/gu)) {
+    const names = m[1] === 'Liste' ? [m[2]!] : m[2]!.split(',');
+    for (const name of names.map((n) => n.trim()).filter(Boolean)) add('concept', name);
+  }
   const components = [...entities.values()].filter((e) => e.kind === 'component');
   for (const m of text.matchAll(LABELLED_LINE)) {
     const isBug = /^(bug|anomalie|incident)$/i.test(m[1]!);

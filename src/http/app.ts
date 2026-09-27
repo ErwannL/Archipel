@@ -15,13 +15,19 @@ declare module 'fastify' {
 // Cytoscape injects one fixed <style> element: only that exact content is allowed (by hash).
 const CYTOSCAPE_STYLE_HASH = "'sha256-pgvDUBa4IjFA2yuSJ2cqcyxmNYJMborsd0ORcRv9vw8='";
 
-const SECURITY_HEADERS = {
-  'content-security-policy': `default-src 'self'; script-src 'self'; style-src 'self' ${CYTOSCAPE_STYLE_HASH}; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
-  'x-content-type-options': 'nosniff',
-  'referrer-policy': 'no-referrer',
-  'x-frame-options': 'DENY',
-  'cache-control': 'no-store',
-};
+/**
+ * The UI is embedded in an <iframe> of Orqea: `frame-ancestors` lists the allowed
+ * origins (ARCHIPEL_FRAME_ANCESTORS), and X-Frame-Options is not sent (DENY would
+ * forbid it; ALLOW-FROM is obsolete — CSP is the only control).
+ */
+export function securityHeaders(frameAncestors: string): Record<string, string> {
+  return {
+    'content-security-policy': `default-src 'self'; script-src 'self'; style-src 'self' ${CYTOSCAPE_STYLE_HASH}; img-src 'self' data:; connect-src 'self'; frame-ancestors ${frameAncestors}; base-uri 'none'; form-action 'none'`,
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'no-referrer',
+    'cache-control': 'no-store',
+  };
+}
 
 /** Maps any error to `{ error: code }`. Logs carry the code only, never a message or body. */
 function toHttp(err: unknown): { status: number; body: object; log: boolean } {
@@ -63,8 +69,9 @@ export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
     req.rawBody = '';
     done();
   });
+  const headers = securityHeaders(ctx.config.ARCHIPEL_FRAME_ANCESTORS);
   app.addHook('onSend', async (_req, reply) => {
-    reply.headers(SECURITY_HEADERS);
+    reply.headers(headers);
   });
   app.addHook('onResponse', async (req, reply) => {
     // Route pattern only (e.g. /v1/boards/:boardId/query): no ids from query strings, no bodies.

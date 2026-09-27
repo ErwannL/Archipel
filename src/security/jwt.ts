@@ -16,6 +16,8 @@ const headerSchema = z.object({ alg: z.literal('HS256') });
 export const handoffSchema = z.object({
   userId: z.string().min(1).max(128),
   boardId: z.string().min(1).max(128),
+  /** Optional display name; Orqea omits it for an encrypted board. Never stored. */
+  boardName: z.string().min(1).max(200).optional(),
   iat: z.number().int(),
   exp: z.number().int(),
 });

@@ -6,6 +6,8 @@ export class ApiError extends Error {
 
 export interface Overview {
   boardId: string;
+  /** From the handoff (never stored); null for an encrypted board or an older Orqea. */
+  boardName: string | null;
   exists: boolean;
   status: {
     progress: number;

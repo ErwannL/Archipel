@@ -21,7 +21,7 @@ describe('boot (handoff in the URL fragment)', () => {
     expect(await boot(window, api, draw)).toBe('app');
     expect(api.session).toHaveBeenCalledWith('tok.en.sig');
     expect(window.location.hash).toBe('');
-    expect(document.querySelector('header')!.textContent).toContain('board b-7');
+    expect(document.querySelector('header')!.textContent).toContain('Refonte paiements');
     expect(document.querySelector('.gauge')!.textContent).toContain('50 %');
     expect((document.querySelector('.fill') as HTMLElement).style.width).toBe('50%');
     expect(draw).toHaveBeenCalledOnce();
@@ -89,10 +89,11 @@ describe('app', () => {
       graph: () => Promise.resolve({ nodes: [], edges: [] }),
       search: () => Promise.resolve({ ...result, passages: [] }),
     });
-    const empty = { ...overview, cards: [] };
+    const empty = { ...overview, cards: [], boardName: null };
     await renderApp(document.getElementById('app')!, api, empty, vi.fn(), ORQEA);
     expect(document.body.textContent).toContain('Le graphe de ce board est vide.');
     expect(document.body.textContent).toContain('Aucune carte en mémoire.');
+    expect(document.querySelector('header .board')!.textContent).toBe('Board #b-7');
     document.querySelector('input')!.value = 'x';
     document.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();

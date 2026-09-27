@@ -21,11 +21,11 @@ afterAll(async () => {
   await pool.end();
 });
 
-async function login(boardId: string, a = app): Promise<string> {
+async function login(boardId: string, a = app, extra: object = {}): Promise<string> {
   const r = await a.inject({
     method: 'POST',
     url: '/ui/session',
-    payload: { token: handoff(boardId) },
+    payload: { token: handoff(boardId, 'u1', 60, 0, extra) },
   });
   expect(r.statusCode).toBe(200);
   expect(r.json().boardId).toBe(boardId);
@@ -124,8 +124,10 @@ describe('UI data, scoped to the session board only', () => {
     ]);
     const graph = (await get('/ui/api/graph')).json();
     const names = graph.nodes.map((n: { name: string }) => n.name).sort();
-    expect(names).toEqual(['Api', 'Redis']);
-    expect(graph.edges).toEqual([expect.objectContaining({ type: 'depends_on', weight: 1 })]);
+    expect(names).toEqual(['Api', 'Cache', 'Redis']);
+    expect(graph.edges.filter((e: { type: string }) => e.type !== 'mentions')).toEqual([
+      expect.objectContaining({ type: 'depends_on', weight: 1 }),
+    ]);
 
     const search = await app.inject({
       method: 'POST',
@@ -185,6 +187,57 @@ describe('UI data, scoped to the session board only', () => {
       errorCode: 'model_unreachable',
       pendingSince: null,
     });
+  });
+
+  it('shows cards as graph nodes even when no entity is extracted, and names the board', async () => {
+    const a = newBoardId();
+    await applyOperation(pool, op(a, 'card.created', 1, { cardId: 'p1', title: 'Plain text' }));
+    await applyOperation(
+      pool,
+      op(a, 'card.created', 2, { cardId: 'p2', title: '', listName: 'À faire', labels: ['ux'] }),
+    );
+    await new Worker(pool, new FakeProvider(), pino({ level: 'silent' }), {
+      pollMs: 5,
+      maxAttempts: 3,
+      backoffBaseMs: 1,
+    }).drain();
+    const cookie = await login(a, app, { boardName: 'Refonte' });
+    const get = (url: string) => app.inject({ method: 'GET', url, headers: { cookie } });
+    expect((await get('/ui/api/overview')).json().boardName).toBe('Refonte');
+    const graph = (await get('/ui/api/graph')).json();
+    const names = graph.nodes.map((n: { name: string }) => n.name).sort();
+    expect(names).toEqual(['#p2', 'Plain text', 'ux', 'À faire']);
+    const concept = graph.nodes.find((n: { name: string }) => n.name === 'ux');
+    expect(graph.edges).toContainEqual({
+      src: 'card:p2',
+      dst: concept.id,
+      type: 'mentions',
+      weight: 1,
+    });
+    const card = (await get('/ui/api/entities/card%3Ap2')).json();
+    expect(card.entity).toEqual({ id: 'card:p2', kind: 'card', name: '#p2' });
+    expect(card.sources[0]).toMatchObject({ itemKey: 'card:p2', cardId: 'p2' });
+    expect(card.relations.map((r: { otherName: string }) => r.otherName).sort()).toEqual([
+      'ux',
+      'À faire',
+    ]);
+    expect((await get('/ui/api/entities/card%3Anope')).statusCode).toBe(404);
+    expect((await get('/ui/api/entities/card%3A')).statusCode).toBe(404);
+    const plain = await login(a);
+    const ov = await app.inject({
+      method: 'GET',
+      url: '/ui/api/overview',
+      headers: { cookie: plain },
+    });
+    expect(ov.json().boardName).toBeNull();
+  });
+
+  it('can be framed by the configured Orqea origins only', async () => {
+    const r = await app.inject({ method: 'GET', url: '/healthz' });
+    expect(r.headers['content-security-policy']).toContain(
+      'frame-ancestors http://localhost:3001 https://orqea.dev https://www.orqea.dev;',
+    );
+    expect(r.headers['x-frame-options']).toBeUndefined();
   });
 
   it('shows an empty board when the island does not exist yet', async () => {
