@@ -71,7 +71,7 @@ export function serviceRoutes(ctx: AppContext) {
       const { events } = eventsBody.parse(req.body);
       const ops: { eventId: string; op: Operation }[] = [];
       for (const [i, raw] of events.entries()) {
-        if (JSON.stringify(raw).length > ctx.config.MAX_EVENT_BYTES) {
+        if (Buffer.byteLength(JSON.stringify(raw)) > ctx.config.MAX_EVENT_BYTES) {
           throw new HttpError(413, `event_too_large:${i}`);
         }
         const parsed = eventSchema.safeParse(raw);

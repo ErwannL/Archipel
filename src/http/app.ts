@@ -1,5 +1,5 @@
 import fastifyStatic from '@fastify/static';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { LogController, type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { IslandNotFound } from '../store/islands.js';
 import { HttpError, type AppContext } from './context.js';
@@ -44,7 +44,8 @@ function toHttp(err: unknown): { status: number; body: object; log: boolean } {
 export async function buildApp(ctx: AppContext): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: ctx.config.LOG_LEVEL },
-    disableRequestLogging: true,
+    // Fastify's request logs include URLs with query strings: replaced by our own route-only log.
+    logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: 4 * 1024 * 1024,
     trustProxy: false,
   });

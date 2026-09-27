@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Repository rules (file length, READMEs, no pragmas)
+        run: npm run guard
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Start Postgres (pgvector) with the real init script
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait postgres
+      - name: Tests with 100 % per-file coverage (unit + integration on real Postgres)
+        run: npm test
+      - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Full stack with docker compose (healthchecks must pass)
+        run: |
+          cp .env.example .env
+          docker compose up -d --build --wait
+      - name: End-to-end demo through the fake Orqea
+        run: DEMO_OPEN=0 npm run demo
+      - name: No secret baked into the image
+        run: |
+          ! docker run --rm --entrypoint sh archipel:local -c 'env; ls -a /app' | grep -iE 'change-me|\.env$'
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color
