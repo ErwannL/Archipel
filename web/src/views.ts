@@ -14,7 +14,7 @@ const KIND_LABELS: Record<string, string> = {
 /** Human label of a source: "carte c1", "consignes d1 § Paiements"... */
 export function citation(s: Pick<Source, 'kind' | 'cardId' | 'docId' | 'heading'>): string {
   const label = KIND_LABELS[s.kind] ?? s.kind;
-  if (s.docId !== null) return `${label} ${s.docId}${s.heading ? ` § ${s.heading}` : ''}`;
+  if (s.docId !== null) return `${label} « ${s.docId} »${s.heading ? ` § ${s.heading}` : ''}`;
   return `${label} · carte ${s.cardId ?? '?'}`;
 }
 
@@ -122,7 +122,7 @@ export function renderResults(
     return b;
   });
   const links = r.guidelineLinks.map((l) =>
-    el(doc, 'div', { class: 'cite' }, `${l.type} → consignes ${l.docId} § ${l.section}`),
+    el(doc, 'div', { class: 'cite' }, `${l.type} → consignes « ${l.docId} » § ${l.section}`),
   );
   return [
     el(doc, 'div', {}, ...chips),

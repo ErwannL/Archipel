@@ -12,9 +12,11 @@ declare module 'fastify' {
   }
 }
 
+// Cytoscape injects one fixed <style> element: only that exact content is allowed (by hash).
+const CYTOSCAPE_STYLE_HASH = "'sha256-pgvDUBa4IjFA2yuSJ2cqcyxmNYJMborsd0ORcRv9vw8='";
+
 const SECURITY_HEADERS = {
-  'content-security-policy':
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+  'content-security-policy': `default-src 'self'; script-src 'self'; style-src 'self' ${CYTOSCAPE_STYLE_HASH}; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'x-frame-options': 'DENY',

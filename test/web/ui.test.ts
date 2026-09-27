@@ -59,7 +59,7 @@ describe('app', () => {
     form.dispatchEvent(new Event('submit', { cancelable: true }));
     await flush();
     expect(api.search).toHaveBeenCalledWith('paiements');
-    expect(document.body.textContent).toContain('applies → consignes d1 § Paiements');
+    expect(document.body.textContent).toContain('applies → consignes « d1 » § Paiements');
     (document.querySelector('.chip') as HTMLButtonElement).click();
     await flush();
     expect(api.entity).toHaveBeenCalledWith('1');
@@ -96,7 +96,9 @@ describe('app', () => {
     const nodes = renderEntity(document, { ...detail, relations: [] }, vi.fn());
     expect(nodes.map((n) => n.textContent).join('|')).toContain('Aucune relation.');
     expect(renderResults(document, result, vi.fn())).toHaveLength(3);
-    expect(citation({ kind: 'doc', docId: 'd1', cardId: null, heading: '' })).toBe('consignes d1');
+    expect(citation({ kind: 'doc', docId: 'd1', cardId: null, heading: '' })).toBe(
+      'consignes « d1 »',
+    );
     expect(citation({ kind: 'fact', docId: null, cardId: 'c1', heading: '' })).toBe(
       'fait d’agent · carte c1',
     );

@@ -46,7 +46,7 @@ describe('fake provider', () => {
         'component:Memcached',
         'component:Front',
         'component:Api',
-        'decision:migrer vers `Redis` #perf',
+        'decision:migrer vers Redis #perf',
         'bug:timeout sur Auth',
         'concept:perf',
       ]),

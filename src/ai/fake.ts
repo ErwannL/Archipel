@@ -54,7 +54,7 @@ const RELATION_PATTERNS: [RegExp, string][] = [
     'depends_on',
   ],
   [new RegExp(`${IDENT}[ \\t]+(?:remplace|replaces)[ \\t]+${IDENT}`, 'giu'), 'replaces'],
-  [new RegExp(`${IDENT}[ \\t]+(?:utilise|appelle|uses|calls)[ \\t]+${IDENT}`, 'giu'), 'uses'],
+  [new RegExp(`${IDENT}[ \\t]+(?:utilise|uses)[ \\t]+${IDENT}`, 'giu'), 'uses'],
 ];
 const COMPONENT_WORD = new RegExp(
   `\\b(?:module|composant|service|component|api|table|librairie|library)[ \\t]+${IDENT}`,
@@ -65,6 +65,7 @@ const LABELLED_LINE =
 
 function clip(s: string): string {
   return s
+    .replace(/`/g, '')
     .replace(/[\s.;,!]+$/u, '')
     .slice(0, 80)
     .trim();

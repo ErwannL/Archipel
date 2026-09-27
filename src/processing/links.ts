@@ -1,7 +1,9 @@
 import type { IslandTx } from '../store/islands.js';
 
-/** Minimum cosine similarity for a passage to be linked to a guideline passage. */
+/** Minimum cosine similarity for a neutral passage to be linked to a guideline passage. */
 export const LINK_THRESHOLD = 0.3;
+/** Lower bar when the passage explicitly applies or contradicts a guideline. */
+export const STANCE_LINK_THRESHOLD = 0.15;
 
 /**
  * Links passages (cards, comments, reports, facts...) to their closest guideline
@@ -21,8 +23,9 @@ export async function relink(tx: IslandTx, onlyItem: string | null): Promise<voi
        WHERE d.model = p.model
        ORDER BY d.embedding <=> p.embedding LIMIT 1
      ) best
-     WHERE best.score >= $1 AND ($2::text IS NULL OR p.item_key = $2)
+     WHERE best.score >= CASE p.stance WHEN 'neutral' THEN $1::float8 ELSE $3::float8 END
+       AND ($2::text IS NULL OR p.item_key = $2)
      ON CONFLICT DO NOTHING`,
-    [LINK_THRESHOLD, onlyItem],
+    [LINK_THRESHOLD, onlyItem, STANCE_LINK_THRESHOLD],
   );
 }
