@@ -62,7 +62,7 @@ export function loader(doc: Document): HTMLElement {
 export function notFoundPage(doc: Document, orqeaUrl: string): HTMLElement {
   const box = el(doc, 'div', { class: 'notfound' });
   box.append(
-    logo(doc, { size: 64, title: 'Archipel' }),
+    logo(doc, { size: 64, mode: 'hover', title: 'Archipel' }),
     el(doc, 'p', {}, '404 — introuvable'),
     el(
       doc,

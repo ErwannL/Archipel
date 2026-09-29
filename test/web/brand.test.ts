@@ -93,7 +93,12 @@ describe('branding in the app', () => {
 
   it('builds loader and 404 on their own', () => {
     expect(loader(document).getAttribute('role')).toBe('status');
-    expect(notFoundPage(document, ORQEA).textContent).toContain('404');
+    const page = notFoundPage(document, ORQEA);
+    expect(page.textContent).toContain('404');
+    // every mark on the branded 404 animates on hover only (never the loop of the loader)
+    const marks = [...page.querySelectorAll('svg')].map((s) => s.getAttribute('class'));
+    expect(marks.length).toBe(2);
+    for (const c of marks) expect(c).toContain('ap-logo--hover');
   });
 });
 
