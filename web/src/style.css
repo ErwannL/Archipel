@@ -234,6 +234,9 @@ th {
   color: var(--muted);
   text-decoration: none;
 }
+.credits a[data-credit='owner'] {
+  font-weight: 600;
+}
 .credits a:hover,
 .credits a:focus-visible {
   color: var(--accent);
