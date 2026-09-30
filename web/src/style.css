@@ -251,6 +251,9 @@ a.back {
 .notfound a.back {
   margin-left: 0;
 }
+a.back[hidden] {
+  display: none;
+}
 a.back:hover,
 a.back:focus-visible {
   border-color: var(--accent);
@@ -276,6 +279,8 @@ a.back:focus-visible {
 }
 .ap-logo--loop .ap-isle,
 .ap-hover:hover .ap-isle,
+.brand:focus-within .ap-logo--hover .ap-isle,
+.notfound:focus-within .ap-logo--hover .ap-isle,
 .ap-logo--hover:hover .ap-isle {
   animation: ap-bob 1.2s ease-in-out infinite;
 }

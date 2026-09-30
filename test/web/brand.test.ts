@@ -2,7 +2,13 @@
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, createApi, type CardDetail } from '../../web/src/api.js';
-import { AUTHOR, DEFAULT_ORQEA_URL, loader, notFoundPage } from '../../web/src/brand.js';
+import {
+  AUTHOR,
+  backToOrqea,
+  DEFAULT_ORQEA_URL,
+  loader,
+  notFoundPage,
+} from '../../web/src/brand.js';
 import { ISLES, logo } from '../../web/src/logo.js';
 import { boot } from '../../web/src/main.js';
 import { errorLabel, STALE_PENDING_MS, statusTable, STATUS_LABELS } from '../../web/src/views.js';
@@ -11,6 +17,7 @@ import { fakeApi } from './fixtures.js';
 const ORQEA = 'http://localhost:3001/apps/return';
 
 beforeEach(() => {
+  Object.defineProperty(window.navigator, 'language', { value: 'fr-FR', configurable: true });
   document.body.innerHTML = '<div id="app"></div>';
   window.history.replaceState(null, '', '/');
 });
@@ -64,7 +71,7 @@ describe('branding in the app', () => {
     release();
     expect(await done).toBe('app');
     const header = document.querySelector('header')!;
-    expect(header.textContent).toContain('Archipel by Orqea');
+    expect(header.textContent).toContain('Archipel par Orqea');
     const owner = header.querySelector('a[data-credit=owner]')!;
     expect(owner.textContent).toBe('Propulsé par Orqea');
     expect(owner.getAttribute('href')).toBe(ORQEA);
@@ -74,7 +81,7 @@ describe('branding in the app', () => {
     expect(author.getAttribute('target')).toBe('_blank');
     expect(author.getAttribute('rel')).toBe('noreferrer noopener');
     const back = header.querySelector('a.back')!;
-    expect(back.textContent).toBe('← Retour sur Orqea');
+    expect(back.textContent).toBe('← Revenir sur Orqea');
     expect(back.getAttribute('href')).toBe(ORQEA);
   });
 
@@ -99,6 +106,32 @@ describe('branding in the app', () => {
     const marks = [...page.querySelectorAll('svg')].map((s) => s.getAttribute('class'));
     expect(marks.length).toBe(2);
     for (const c of marks) expect(c).toContain('ap-logo--hover');
+  });
+});
+
+describe('language and iframe', () => {
+  it('speaks English for an English browser', () => {
+    Object.defineProperty(window.navigator, 'language', { value: 'en-GB', configurable: true });
+    const page = notFoundPage(document, ORQEA);
+    expect(page.textContent).toContain('Archipel by Orqea');
+    expect(page.textContent).toContain('Powered by Orqea');
+    expect(page.textContent).toContain('Developed by Erwann Laplante');
+    expect(page.querySelector('a.back')!.textContent).toBe('← Back to Orqea');
+    expect(page.textContent).toContain('404 — not found');
+    expect(loader(document).textContent).toBe('Loading…');
+  });
+
+  it('hides the way back inside an iframe (the Orqea console)', () => {
+    expect(backToOrqea(document, ORQEA).hidden).toBe(false);
+    const top = vi.spyOn(window, 'top', 'get').mockReturnValue({} as Window);
+    expect(backToOrqea(document, ORQEA).hidden).toBe(true);
+    top.mockRestore();
+  });
+
+  it('the logo also animates on keyboard focus, and stays still under reduced motion', () => {
+    const css = readFileSync('web/src/style.css', 'utf8');
+    expect(css).toContain('.brand:focus-within .ap-logo--hover .ap-isle');
+    expect(css).toContain('prefers-reduced-motion: reduce');
   });
 });
 
