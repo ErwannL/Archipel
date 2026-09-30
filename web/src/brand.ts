@@ -14,7 +14,6 @@ const TEXTS = {
     by: 'par Orqea',
     owner: 'Propulsé par Orqea',
     author: 'Développé par',
-    newTab: '(nouvel onglet)',
     back: '← Revenir sur Orqea',
     loading: 'Chargement…',
     notFound: '404 — introuvable',
@@ -24,7 +23,6 @@ const TEXTS = {
     by: 'by Orqea',
     owner: 'Powered by Orqea',
     author: 'Developed by',
-    newTab: '(new tab)',
     back: '← Back to Orqea',
     loading: 'Loading…',
     notFound: '404 — not found',
@@ -57,8 +55,8 @@ export function brand(doc: Document, orqeaUrl: string): HTMLElement {
         doc,
         'div',
         { class: 'credits' },
-        // Same tab: Orqea's session lives in the tab (sessionStorage).
-        el(doc, 'a', { href: orqeaUrl, 'data-credit': 'owner' }, tx.owner),
+        // Same tab (Orqea's session lives in the tab), outside the console iframe.
+        el(doc, 'a', { href: orqeaUrl, target: '_top', 'data-credit': 'owner' }, tx.owner),
         el(
           doc,
           'a',
@@ -66,7 +64,7 @@ export function brand(doc: Document, orqeaUrl: string): HTMLElement {
             href: AUTHOR.href,
             target: '_blank',
             rel: 'noreferrer noopener',
-            'aria-label': `${tx.author} ${AUTHOR.name} ${tx.newTab}`,
+            'aria-label': `${tx.author} ${AUTHOR.name}`,
             'data-credit': 'author',
           },
           `${tx.author} ${AUTHOR.name}`,
@@ -80,7 +78,7 @@ export function brand(doc: Document, orqeaUrl: string): HTMLElement {
 export function backToOrqea(doc: Document, orqeaUrl: string): HTMLElement {
   // Inside the Orqea console iframe the console itself is the way back: the button is hidden.
   const win = doc.defaultView as Window;
-  const link = el(doc, 'a', { class: 'back', href: orqeaUrl }, texts(doc).back);
+  const link = el(doc, 'a', { class: 'back', href: orqeaUrl, target: '_top' }, texts(doc).back);
   link.hidden = win.self !== win.top;
   return link;
 }

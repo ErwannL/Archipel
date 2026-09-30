@@ -75,14 +75,16 @@ describe('branding in the app', () => {
     const owner = header.querySelector('a[data-credit=owner]')!;
     expect(owner.textContent).toBe('Propulsé par Orqea');
     expect(owner.getAttribute('href')).toBe(ORQEA);
-    expect(owner.hasAttribute('target')).toBe(false);
+    expect(owner.getAttribute('target')).toBe('_top');
     const author = header.querySelector('a[data-credit=author]')!;
+    expect(author.getAttribute('aria-label')).toBe('Développé par Erwann Laplante');
     expect(author.getAttribute('href')).toBe(AUTHOR.href);
     expect(author.getAttribute('target')).toBe('_blank');
     expect(author.getAttribute('rel')).toBe('noreferrer noopener');
     const back = header.querySelector('a.back')!;
     expect(back.textContent).toBe('← Revenir sur Orqea');
     expect(back.getAttribute('href')).toBe(ORQEA);
+    expect(back.getAttribute('target')).toBe('_top');
   });
 
   it('falls back to orqea.dev and keeps the 404 branded', async () => {
