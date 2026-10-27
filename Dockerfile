@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build stage: compiles the server (tsc) and the UI (vite). No secret is used or copied.
-FROM node:22-alpine AS build
+FROM node:22.23.4-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 # Optional build secret `extra_ca`: a CA bundle for TLS-intercepting proxies. Never stored in a layer.
@@ -14,7 +14,7 @@ COPY fake-orqea ./fake-orqea
 RUN npm run build
 
 # Runtime stage: production dependencies + compiled output only, non-root user.
-FROM node:22-alpine
+FROM node:22.23.4-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package.json package-lock.json ./
